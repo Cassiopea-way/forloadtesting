@@ -41,3 +41,141 @@ body {background:url('video.png');
 .buttonmenu:hover {
 	text-shadow:0px 0px 5px skyblue;
 }
+
+#chat {
+	display:flex;
+	flex-direction:row;
+	border:1px solid red;
+	width:500px;
+	height:300px;
+	margin:100px auto;
+}
+
+#columnblock {display:flex;
+              flex-direction:column;
+			  justify-content:space-between;
+			  width:80%;
+			  padding:0 3%;}
+			  
+#rowblock {display:flex;
+           flex-direction:row;}
+
+#chatblock {
+	border:1px solid green;
+	width:100%;
+	height:250px;
+	background:white;
+}
+
+#chatusers {border:1px solid pink;
+            color:skyblue;
+			text-align:center;
+            width:20%;
+			height:100%;}
+			
+.userlist {padding:0px;
+           margin:5px;}
+			
+.userlist li {list-style-type:none;
+              padding:3px;}
+
+#chatmessage {
+	border:1px solid yellow;
+	width:85%;
+	margin:0px 4% 0px 0px;
+}
+
+#messagesend {border:1px soild skyblue;
+	          background:transparent;
+	          color:skyblue;
+	          font-size: 20px;
+	          font-family:"Comic Sans MS";    
+	          }
+			  
+.messagelist {list-style-type:none;
+              display:block;
+              margin:0px auto;}
+			  
+.messagelist li #user {font-weight:bold;
+                       color:pink;
+					   display:block;
+					   margin:5px 0px;
+					   }
+					   
+.messagelist li #message {background-color:skyblue;
+                          color:white;
+						  display:inline-block;
+						  border-radius:5px;
+						  padding:5px;}
+						  
+/*Boot Screen*/
+
+        @keyframes anim1 {
+	0% {transform: rotate(0deg);}
+	100% {transform: rotate(360deg);}
+}
+#wrapper{
+	margin: 150px auto;
+	width:200px;
+    height: 200px;
+	border-radius: 100px;	
+}
+#rotate{
+	position: relative;
+    width:200px;
+    height:200px;
+	
+	-webkit-animation:anim1 1s linear infinite;
+	animation:anim1 1s linear infinite;
+}
+
+
+@keyframes anim2 {
+	0% {background: white;}
+	50% {background: red;}
+	100%{background: white;}
+}
+
+
+#ball1{
+    position: absolute;
+	top: 164px;
+	left: 164px;
+    width:50px;
+    height: 50px;
+	border-radius: 25px;
+    background-color:skyblue;
+    box-shadow:0px 0px 20px 10px skyblue;    
+}
+#ball2{
+    position: absolute;
+	top: 120px;
+	left: -45px;
+    width:50px;
+    height: 50px;
+	border-radius: 25px;
+    background-color:skyblue;
+    box-shadow:0px 0px 20px 10px skyblue;    
+}
+#ball3{
+    position: absolute;
+	top: -50px;
+	left: 105px;
+    width:50px;
+    height: 50px;
+	border-radius: 25px;
+    background-color:skyblue;
+    box-shadow:0px 0px 20px 10px skyblue;    
+}
+
+/*End of Boot Screen*/
+
+/*user light*/
+@keyframes animuser {
+	0% {text-shadow: 0px 0px 0px skyblue;}
+   50% {text-shadow: 0px 0px 10px skyblue;}
+  100% {text-shadow: 0px 0px 0px skyblue;} 
+}
+
+.on {animation: animuser 1s linear;}
+/*user light*/

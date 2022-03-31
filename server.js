@@ -5,13 +5,12 @@ let server = http.createServer(app);
 let cors = require('cors');
 let io = require('socket.io')(server,{
     cors: {
-        origin: "http://localhost:8888",
+        origin: "*",
         methods: ["GET","POST"]
     }
 });
 let nodemailer = require('nodemailer');
 let smtptransport = require('nodemailer-smtp-transport');
-const hbs = require('hbs');
 let fs = require('fs');
 const multer = require('multer');
 let favicon = require('serve-favicon');
@@ -67,13 +66,15 @@ mongoClient.connect(function(err, client){
     }
 
     dbClient = client;
-    app.locals.collection = client.db("test").collection("users");
+    //app.locals.collection = client.db("test").collection("users");
+    app.locals.collection = client.db("test");
     // взаимодействие с базой данных
     console.log('database-->OK');
 });
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended:false}));
+app.use(bodyParser.urlencoded({extended:true}));
+
 //app.use(cors);
 
 app.use(favicon((__dirname + '/public/images/favicon.ico')));
@@ -97,24 +98,154 @@ const upload = multer({storage:storageimage});
 
 app.use(multer({storage:storageimage}).single("file"));
 
-app.set("view engine","hbs");
-app.set("views",path.join(__dirname,'pages'));
-//app.use(favicon(options.favicon));
+io.on('connection',(socket) => {
+      console.log('user connected :',socket.id);
+        const collection = app.locals.collection;
 
-hbs.registerHelper("getUserphoto",function(request){
-    let sessionData = request.session;
-    let backgroundImage = '/uploads/pisos.jpg';
-    return backgroundImage; 
-});
+        socket.on('JOIN',async(data) => {
+          console.log(data);
+          data.socketid = socket.id;
+         
+         let queries = [new Promise(function(resolve,reject){
+                         collection.collection("chatroom").insertOne(data,function(err, insertuser){    
+                         console.log('1');
+                         resolve();
+                         if(err) return console.log(err);
+                       });
+                       }),
+                       new Promise(function(resolve,reject){
+                         collection.collection('chatroom').find().toArray(function(err,chatroomusers){
+                         console.log(chatroomusers);
+                         console.log('2');
+                         let usersinroom = [];
+                         for (let i = 0; i < chatroomusers.length; i++){
+                           usersinroom.push(chatroomusers[i].joinuser);
+                         }
+                         console.log(usersinroom);
+                         resolve(usersinroom);
+                         if (err) throw err;
+                         });
+                       }),
+                       new Promise(function(resolve,reject){
+                         collection.collection('chatmessages').find().toArray(function(err,messages){
+                         console.log(messages);
+                         console.log('3');
+                         resolve(messages);
+                       });
+                       })
+
+         ];
+
+         console.log(queries);
+
+         Promise.all(queries).then(function(results){
+           console.log(results);
+           socket.broadcast.emit('JOINED',results[1]);
+           socket.emit('GETMESSAGES',results[2]);
+         }).catch(function(err){
+           console.log(err);
+         });
+
+        });
+
+        /*socket.emit('CONNECTION_USER',(data) => {
+          console.log('user connected');
+        });*/
+
+        socket.on('NEW_MESSAGE',async(data) => {
+          console.log(data);
+          let copy = {};
+          copy.authuser = data.user;
+          copy.usermessage = data.inputValue;
+          let messageid;
+          
+          let queries = [new Promise(function(resolve,reject){
+                           collection.collection('chatmessages').insertOne(copy,function(err, insertmessage){
+                           console.log('4');
+                           console.log(insertmessage);
+                           resolve();
+                           if(err) return console.log(err);
+                        }); 
+                        }),
+                        new Promise(function(resolve,reject){
+                           collection.collection('chatmessages').find().limit(1).sort({$natural:-1}).toArray(function(err,findmessage){
+                           console.log(findmessage);
+                           console.log('5');
+                           resolve(findmessage);
+                           if(err) return console.log(err);
+                        });
+                        })];
+
+          console.log(queries);
+
+          Promise.all(queries).then(function(results){
+          console.log(results);
+          socket.broadcast.emit('SET_MESSAGE',results[1]);
+         }).catch(function(err){
+            console.log(err);
+         }); 
+
+        });
+
+        socket.on('disconnect',async() => {
+            console.log('disconnected');
+            
+            let queries = [new Promise(function(resolve,reject){
+                            collection.collection('chatroom').deleteOne({socketid:socket.id},function(err,deleteuser){
+                            console.log('6');
+                            console.log(deleteuser);
+                            resolve();
+                            if (err) return console.log(err);
+                          });
+                          }),
+                          new Promise(function(resolve,reject){
+                            collection.collection('chatroom').find().toArray(function(err,chatroomusers){
+                            console.log(chatroomusers);
+                            console.log('7');
+                            let usersinroom = [];
+                            for (let i = 0; i < chatroomusers.length; i++){
+                              usersinroom.push(chatroomusers[i].joinuser);
+                            }
+                            console.log(usersinroom);
+                            resolve(usersinroom); 
+                            if (err) throw err;
+                          });
+                          })
+            ];
+
+            console.log(queries);
+
+            Promise.all(queries).then(function(results){
+            console.log(results);
+            socket.broadcast.emit('LEAVE',results[1]);
+         }).catch(function(err){
+            console.log(err);
+         }); 
+
+        });
+      });
 
 function getRandomInt(min,max){
   return Math.floor(Math.random()*(max - min + 1)) + min;
 }
 
 app.get("/api",function(request,response){
-  console.log(request.session);
-	response.send(request.session.user.username);
-    //response.render('login');
+     console.log(request.session);
+  if (request.session.hasOwnProperty('user') === false){
+      response.send('пользователь не авторизован');
+  } else {
+      console.log(request.session.user.username);
+      response.send(request.session.user.username);
+  }
+    
+});
+
+app.get("/getusers",function(request,response){
+   const collection = app.locals.collection;
+   collection.collection('chatroom').find().toArray(function(err,chatroomusers){
+      console.log(chatroomusers);
+      response.send(chatroomusers);
+   });
 });
 
 /*app.get("/login",function(request,response){
@@ -134,7 +265,7 @@ app.post("/admin",function(request,response){
     console.log(password);
     const collection = request.app.locals.collection;
 
-    collection.findOne({userLogin:login},function(err, correctuser){
+    collection.collection('users').findOne({userLogin:login},function(err, correctuser){
         //console.log(collection);
         if(err) return console.log(err);
          //response.send(users);
@@ -160,7 +291,7 @@ app.post("/admin",function(request,response){
            console.log("Login succeeded: ",sessionData.user.username);
            console.log('Login successfull ' + 'sessionID: ' + request.session.id + '; user: ' + sessionData.user.username);
            //response.send('Login successfull ' + 'sessionID: ' + request.session.id + '; user: ' + sessionData.user.username);
-           response.send('auth is OK');
+           response.json({"user":username,"authstatus":"auth is OK"});
           }
         }
    
@@ -179,10 +310,14 @@ app.post("/admin",function(request,response){
 });*/
 
 app.get('/logout',function(request,response){
-    let sessionData = request.session;
-    sessionData.user = '';
-    console.log('logged out');
-    response.send('logged out!');
+    request.session.destroy(function(err){
+      if (err) {
+        throw err;
+      } else {
+        console.log('logged out');
+        response.send('logged out!');
+      }
+    });
 });
 
 app.get('/admin',function(request,response){
@@ -239,33 +374,26 @@ app.get('/user',function(request,response){
 	}
 });
 
-app.get('/user/myprofile',function(request,response){
+app.get('/MyProfilePage',function(request,response){
     let sessionData = request.session;
-    let name = 'hello my friend=D';
     const collection = request.app.locals.collection;
     collection.findOne({userLogin:sessionData.user.username},function(err,user){
-        response.render('myprofile.hbs',{
+        let objuser = {
            username:user.userName,
            usersurname:user.userSurname,
            userlogin:user.userLogin,
            useremail:user.userEmail,
            userphoto:user.userPhoto
-        });
+        };
+        response.json(objuser);
     });
 });
 
-app.get('/test1',function(request,response){
+app.get('/test2',function(request,response){
    let sessionData = request.session;
    const collection = request.app.locals.collection;
-   collection.findOne({userLogin:sessionData.user.username},function(err,user){
-      io.on('connection',() => {
-        console.log('connection');
-        io.emit('joined',user.userLogin);
-        io.on('disconnect',() => {
-            console.log('disconnected');
-        });
-      });
-      response.render('test1');
+   collection.collection("users").findOne({userLogin:sessionData.user.username},function(err,user){
+     
    });
    
 });
@@ -453,6 +581,18 @@ app.post('/SMSisverify',function(request,response){
     } else {
         response.redirect('/user/myprofile'); 
     }  
+});
+
+app.post('/addmessage',function(request,response){
+    const collection = request.app.locals.collection;
+    collection.collection("chatmessages").insertOne(request.body,function(err, insertmessage){
+        //console.log(collection);
+        console.log(request.body);
+        console.log('1');
+        if(err) return console.log(err);
+        response.send('message added');
+
+    });
 });
 
 app.get('/guest',function(){	

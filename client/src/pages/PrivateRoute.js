@@ -1,11 +1,16 @@
-
-import React,{useContext} from 'react'
+import React,{useContext,useState} from 'react'
 import { Navigate, Outlet } from 'react-router-dom';
 import {UserContext} from './../hooks/UserContext'
 
 export const PrivateRoute = () => {
-	const {user,isLoading} = useContext(UserContext);
+	const [user,isLoading,setUser] = useContext(UserContext);
 	console.log(user,isLoading);
+	let isAuthenticated = false;
+	if (user == 'пользователь не авторизован'){
+		isAuthenticated = false;
+	} else {
+		isAuthenticated = true;
+	}
 	
-	return isLoading ? <Outlet /> : <Navigate to="/login" />;
+	return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
 }

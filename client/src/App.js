@@ -1,7 +1,6 @@
-import React,{Fragment} from 'react'
-import {BrowserRouter,Routes,Route} from 'react-router-dom'
+import React,{Fragment,useState,useEffect} from 'react'
+import {BrowserRouter,Routes,Route,Outlet} from 'react-router-dom'
 import {UserContext} from './hooks/UserContext'
-import useFindUser from './hooks/useFindUser'
 import {AuthPage} from './pages/AuthPage.js'
 import {RegisterPage} from './pages/RegisterPage.js'
 import {UserPage} from './pages/UserPage.js'
@@ -14,31 +13,72 @@ import {ChangepasswordPage} from './pages/ChangepasswordPage.js'
 
 
 
-function App() {
-	const {user,setUser,isLoading} = useFindUser();
-	console.log(user,setUser,isLoading);
+ function App() {
+	
+	const [user,setUser] = useState(null);
+	const [isLoading,setIsLoading] = useState(false);
+	const [auth,setAuth] = useState(false);
+	
+	function useauthenticate(){
+		setAuth(true);
+		console.log('AUTH IS OK');
+	}
+	
+	useEffect(() => {
+		fetch('/api')
+        .then(response => response.text())
+		.then(user => {
+			setUser(user);
+			setIsLoading(true);
+			console.log(user,isLoading);
+			return {
+				user: user,
+				isLoading: true
+			   }
+        }).catch(err => {
+			setIsLoading(false);
+          return {
+				isLoading: false
+			   }
+        });
+		
+	},[]);
+	
+  if (!isLoading){
+	  return <div id = "wrapper">
+	           <div id = "rotate">
+			     <div id = "ball1"></div>
+				 <div id = "ball2"></div>
+				 <div id = "ball3"></div>
+			   </div>
+			 </div>;
+  }	
+  
   return (
     <BrowserRouter>
-     <UserContext.Provider value = {{user,isLoading}}>	
+     <UserContext.Provider value = {[user,isLoading,setUser]}>	
 	  <Fragment>
 	    <Routes>
           <Route path='/' element={<PrivateRoute/>}>
-            <Route path='/UserPage' element={<UserPage/>}> 
-			   <Route path='/UserPage/MyprofilePage' element={<MyprofilePage/>}>
-			     <Route path='/UserPage/MyprofilePage/changepassword' element={<ChangepasswordPage/>}/>
+            <Route index element={<UserPage/>}></Route>			
+			   <Route path='MyprofilePage' element={<MyprofilePage/>}>
+			     
 			   </Route>
-			   <Route path='/UserPage/test1' element={<Test1Page/>}/>
-			   <Route path='/UserPage/test2' element={<Test2Page/>}/>
-			   <Route path='/UserPage/test3' element={<Test3Page/>}/>
-			</Route>
+			   <Route path='MyprofilePage/changepassword' element={<ChangepasswordPage/>}/>
+			   <Route path='test1' element={<Test1Page/>}/>
+			   <Route path='test2' element={<Test2Page/>}/>
+			   <Route path='test3' element={<Test3Page/>}/>
           </Route>
           <Route path='/register' element={<RegisterPage/>}/>
-          <Route path='/login' element={<AuthPage/>}/>
+          <Route path='/login' element={<AuthPage authenticate = {useauthenticate}/>}/>
         </Routes> 
       </Fragment>
      </UserContext.Provider>	  
 	</BrowserRouter>
+	
   );
+  
 }
 
 export default App;
+

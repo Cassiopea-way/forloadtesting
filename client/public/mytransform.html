@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Это заголовок тайтл</title>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0">
+	</head>
+	<style>
+        @keyframes anim1 {
+	0% {transform: rotate(0deg);}
+	100% {transform: rotate(360deg);}
+}
+#wrapper{
+	margin: 150px auto;
+	width:200px;
+    height: 200px;
+	border-radius: 100px;	
+}
+#rotate{
+	position: relative;
+    width:200px;
+    height:200px;
+	
+	-webkit-animation:anim1 1s linear infinite;
+	animation:anim1 1s linear infinite;
+}
+
+
+@keyframes anim2 {
+	0% {background: white;}
+	50% {background: red;}
+	100%{background: white;}
+}
+
+
+#ball1{
+    position: absolute;
+	top: 164px;
+	left: 164px;
+    width:50px;
+    height: 50px;
+	border-radius: 25px;
+    background-color:skyblue;
+    box-shadow:0px 0px 20px 10px skyblue;    
+}
+#ball2{
+    position: absolute;
+	top: 120px;
+	left: -45px;
+    width:50px;
+    height: 50px;
+	border-radius: 25px;
+    background-color:skyblue;
+    box-shadow:0px 0px 20px 10px skyblue;    
+}
+#ball3{
+    position: absolute;
+	top: -50px;
+	left: 105px;
+    width:50px;
+    height: 50px;
+	border-radius: 25px;
+    background-color:skyblue;
+    box-shadow:0px 0px 20px 10px skyblue;    
+}
+	</style>
+	<body>
+	   	<div id="wrapper">
+		<div id="rotate">
+		   <div id="ball1"></div>
+		   <div id="ball2"></div>
+		   <div id="ball3"></div>
+		</div>
+	</div>
+	</body>
+</html>

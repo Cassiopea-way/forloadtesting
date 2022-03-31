@@ -1,0 +1,63 @@
+e.preventDefault();
+			  console.log(user);
+			  //setAddmessage(prevState => ({...prevState,authuser:user,usermessage:inputValue}));
+			  const copy = Object.assign({},addmessage);
+			  copy.authuser = user;
+			  copy.usermessage = inputValue;
+			  setAddmessage(copy);
+		      setMessages(user + ' : ' + inputValue + ' : ' + addmessage.authuser + ' : ' + addmessage.usermessage + ' : ' + addmessage + ' : ' + copy.usermessage);
+			  console.log(messages);
+			  console.log(addmessage);
+			  try {
+				  const data = await request('/addmessage','POST',{...copy});
+			      console.log('data: ',data);
+			  } catch(e) {
+			     throw e;
+		      }
+			  
+ //const chatroomusers = collection.collection('chatroom').find().toArray();
+
+          //console.log(chatroomusers);
+          /*chatroomusers.then(users => {
+             console.log(users);
+             socket.broadcast.emit('JOINED',users);
+          });*/
+          /*socket.broadcast.emit('JOINED',chatroomusers,() => {
+             return new Promise((resolve,reject) => {
+              if (!this.socket){
+                reject('No socket connection');
+              } else {
+                this.socket.emit('JOINED',chatroomusers,(response) => {
+                  if (response.error){
+                    console.error(response.error);
+                    reject(response.error);
+                  } else {
+                    resolve();
+                  }
+                })
+              }
+             })
+          });*/
+		  
+		  /*const data = request('/getusers','GET');
+		console.log(data);
+		data.then(newusers => {
+			console.log(newusers);
+			let usersinroom = [];
+			for (let i = 0; i < newusers.length; i++){
+				usersinroom.push(newusers[i].joinuser);
+			}
+			setJoinedusers([...joinedusers,...usersinroom]);
+		});*/
+		
+		setMessages(prevMessages => [...prevMessages,...newmessage]);
+			console.log(messages);
+			
+		e.preventDefault();
+		socket.emit('NEW_MESSAGE',({user,inputValue}));
+		setInputValue('');
+		
+		data.then(() => {navigate('/');})
+			.catch(function(err){
+				console.log(err);
+			});
